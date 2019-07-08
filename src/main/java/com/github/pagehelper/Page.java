@@ -69,7 +69,7 @@ public class Page<E> extends ArrayList<E> implements Closeable {
      */
     private Boolean pageSizeZero;
     /**
-     * 进行count查询的列名
+     * 进行cou查询的列名
      */
     private String countColumn;
     /**
