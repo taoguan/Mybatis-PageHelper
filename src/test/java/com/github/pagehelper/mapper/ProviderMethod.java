@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 abel533@gmail.com
+ * Copyright (c) 2014-2017 abel533@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,13 +34,13 @@ import java.util.Map;
  */
 public class ProviderMethod {
 
+    @SuppressWarnings("unchecked")
     public String select(Map<String, Object> map) {
         Map<String, Object> param = (HashMap<String, Object>) map.get("param");
         StringBuilder sbSql = new StringBuilder();
         sbSql.append("select * from country where 1=1 ");
-        int index = 0;
         for (Map.Entry<String, Object> entry : param.entrySet()) {
-            sbSql.append(" and "+entry.getKey() + "= #{param." + entry.getKey() + "} ");
+            sbSql.append(" and " + entry.getKey() + "= #{param." + entry.getKey() + "} ");
         }
         sbSql.append("order by id");
         return sbSql.toString();

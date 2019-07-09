@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 abel533@gmail.com
+ * Copyright (c) 2014-2017 abel533@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,197 +24,109 @@
 
 package com.github.pagehelper;
 
-import com.github.orderbyhelper.OrderByHelper;
-import org.apache.ibatis.executor.Executor;
+import com.github.pagehelper.dialect.AbstractHelperDialect;
+import com.github.pagehelper.page.PageAutoDialect;
+import com.github.pagehelper.page.PageMethod;
+import com.github.pagehelper.page.PageParams;
+import com.github.pagehelper.util.MSUtils;
+import com.github.pagehelper.util.StringUtil;
+import org.apache.ibatis.cache.CacheKey;
+import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.plugin.*;
-import org.apache.ibatis.reflection.MetaObject;
-import org.apache.ibatis.reflection.SystemMetaObject;
-import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
-import javax.sql.DataSource;
-import java.sql.SQLException;
+import java.util.List;
 import java.util.Properties;
 
 /**
- * Mybatis - 通用分页拦截器
+ * Mybatis - 通用分页拦截器<br/>
+ * 项目地址 : http://git.oschina.net/free/Mybatis_PageHelper
  *
  * @author liuzh/abel533/isea533
- * @version 3.3.0
- *          项目地址 : http://git.oschina.net/free/Mybatis_PageHelper
+ * @version 5.0.0
  */
-@SuppressWarnings({"rawtypes", "unchecked"})
-@Intercepts(@Signature(type = Executor.class, method = "query", args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class}))
-public class PageHelper implements Interceptor {
-    //sql工具类
-    private SqlUtil sqlUtil;
-    //属性参数信息
-    private Properties properties;
-    //自动获取dialect
-    private Boolean autoDialect;
+public class PageHelper extends PageMethod implements Dialect {
+    private PageParams pageParams;
+    private PageAutoDialect autoDialect;
 
-    /**
-     * 开始分页
-     *
-     * @param pageNum  页码
-     * @param pageSize 每页显示数量
-     */
-    public static Page startPage(int pageNum, int pageSize) {
-        return startPage(pageNum, pageSize, true);
-    }
-
-    /**
-     * 开始分页
-     *
-     * @param pageNum  页码
-     * @param pageSize 每页显示数量
-     * @param count    是否进行count查询
-     */
-    public static Page startPage(int pageNum, int pageSize, boolean count) {
-        return startPage(pageNum, pageSize, count, null);
-    }
-
-    /**
-     * 开始分页
-     *
-     * @param pageNum  页码
-     * @param pageSize 每页显示数量
-     * @param orderBy  排序
-     */
-    public static Page startPage(int pageNum, int pageSize, String orderBy) {
-        orderBy(orderBy);
-        return startPage(pageNum, pageSize);
-    }
-
-    /**
-     * 开始分页
-     *
-     * @param pageNum    页码
-     * @param pageSize   每页显示数量
-     * @param count      是否进行count查询
-     * @param reasonable 分页合理化,null时用默认配置
-     */
-    public static Page startPage(int pageNum, int pageSize, boolean count, Boolean reasonable) {
-        return startPage(pageNum, pageSize, count, reasonable, null);
-    }
-
-    /**
-     * 开始分页
-     *
-     * @param pageNum      页码
-     * @param pageSize     每页显示数量
-     * @param count        是否进行count查询
-     * @param reasonable   分页合理化,null时用默认配置
-     * @param pageSizeZero true且pageSize=0时返回全部结果，false时分页,null时用默认配置
-     */
-    public static Page startPage(int pageNum, int pageSize, boolean count, Boolean reasonable, Boolean pageSizeZero) {
-        Page page = new Page(pageNum, pageSize, count);
-        page.setReasonable(reasonable);
-        page.setPageSizeZero(pageSizeZero);
-        SqlUtil.setLocalPage(page);
-        return page;
-    }
-
-    /**
-     * 开始分页
-     *
-     * @param params
-     */
-    public static Page startPage(Object params) {
-        Page page = SqlUtil.getPageFromObject(params);
-        SqlUtil.setLocalPage(page);
-        return page;
-    }
-
-    /**
-     * 排序
-     *
-     * @param orderBy
-     */
-    public static void orderBy(String orderBy) {
-        OrderByHelper.orderBy(orderBy);
-    }
-
-    /**
-     * Mybatis拦截器方法
-     *
-     * @param invocation 拦截器入参
-     * @return 返回执行结果
-     * @throws Throwable 抛出异常
-     */
-    public Object intercept(Invocation invocation) throws Throwable {
-        if (autoDialect) {
-            initSqlUtil(invocation);
+    @Override
+    public boolean skip(MappedStatement ms, Object parameterObject, RowBounds rowBounds) {
+        if(ms.getId().endsWith(MSUtils.COUNT)){
+            throw new RuntimeException("在系统中发现了多个分页插件，请检查系统配置!");
         }
-        return sqlUtil.processPage(invocation);
-    }
-
-    /**
-     * 初始化sqlUtil
-     *
-     * @param invocation
-     */
-    public synchronized void initSqlUtil(Invocation invocation) {
-        if (sqlUtil == null) {
-            String url = null;
-            try {
-                MappedStatement ms = (MappedStatement) invocation.getArgs()[0];
-                MetaObject msObject = SystemMetaObject.forObject(ms);
-                DataSource dataSource = (DataSource) msObject.getValue("configuration.environment.dataSource");
-                url = dataSource.getConnection().getMetaData().getURL();
-            } catch (SQLException e) {
-                throw new RuntimeException("分页插件初始化异常:" + e.getMessage());
-            }
-            if (url == null || url.length() == 0) {
-                throw new RuntimeException("无法自动获取jdbcUrl，请在分页插件中配置dialect参数!");
-            }
-            String dialect = Dialect.fromJdbcUrl(url);
-            if (dialect == null) {
-                throw new RuntimeException("无法自动获取数据库类型，请通过dialect参数指定!");
-            }
-            sqlUtil = new SqlUtil(dialect);
-            sqlUtil.setProperties(properties);
-            properties = null;
-            autoDialect = false;
-        }
-    }
-
-    /**
-     * 只拦截Executor
-     *
-     * @param target
-     * @return
-     */
-    public Object plugin(Object target) {
-        if (target instanceof Executor) {
-            return Plugin.wrap(target, this);
+        Page page = pageParams.getPage(parameterObject, rowBounds);
+        if (page == null) {
+            return true;
         } else {
-            return target;
+            //设置默认的 count 列
+            if(StringUtil.isEmpty(page.getCountColumn())){
+                page.setCountColumn(pageParams.getCountColumn());
+            }
+            autoDialect.initDelegateDialect(ms);
+            return false;
         }
     }
 
-    /**
-     * 设置属性值
-     *
-     * @param p 属性值
-     */
-    public void setProperties(Properties p) {
-        //MyBatis3.2.0版本校验
-        try {
-            Class.forName("org.apache.ibatis.scripting.xmltags.SqlNode");//SqlNode是3.2.0之后新增的类
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("您使用的MyBatis版本太低，MyBatis分页插件PageHelper支持MyBatis3.2.0及以上版本!");
+    @Override
+    public boolean beforeCount(MappedStatement ms, Object parameterObject, RowBounds rowBounds) {
+        return autoDialect.getDelegate().beforeCount(ms, parameterObject, rowBounds);
+    }
+
+    @Override
+    public String getCountSql(MappedStatement ms, BoundSql boundSql, Object parameterObject, RowBounds rowBounds, CacheKey countKey) {
+        return autoDialect.getDelegate().getCountSql(ms, boundSql, parameterObject, rowBounds, countKey);
+    }
+
+    @Override
+    public boolean afterCount(long count, Object parameterObject, RowBounds rowBounds) {
+        return autoDialect.getDelegate().afterCount(count, parameterObject, rowBounds);
+    }
+
+    @Override
+    public Object processParameterObject(MappedStatement ms, Object parameterObject, BoundSql boundSql, CacheKey pageKey) {
+        return autoDialect.getDelegate().processParameterObject(ms, parameterObject, boundSql, pageKey);
+    }
+
+    @Override
+    public boolean beforePage(MappedStatement ms, Object parameterObject, RowBounds rowBounds) {
+        return autoDialect.getDelegate().beforePage(ms, parameterObject, rowBounds);
+    }
+
+    @Override
+    public String getPageSql(MappedStatement ms, BoundSql boundSql, Object parameterObject, RowBounds rowBounds, CacheKey pageKey) {
+        return autoDialect.getDelegate().getPageSql(ms, boundSql, parameterObject, rowBounds, pageKey);
+    }
+
+    public String getPageSql(String sql, Page page, RowBounds rowBounds, CacheKey pageKey) {
+        return autoDialect.getDelegate().getPageSql(sql, page, pageKey);
+    }
+
+    @Override
+    public Object afterPage(List pageList, Object parameterObject, RowBounds rowBounds) {
+        //这个方法即使不分页也会被执行，所以要判断 null
+        AbstractHelperDialect delegate = autoDialect.getDelegate();
+        if(delegate != null){
+            return delegate.afterPage(pageList, parameterObject, rowBounds);
         }
-        //数据库方言
-        String dialect = p.getProperty("dialect");
-        if (dialect == null || dialect.length() == 0) {
-            autoDialect = true;
-            this.properties = p;
-        } else {
-            autoDialect = false;
-            sqlUtil = new SqlUtil(dialect);
-            sqlUtil.setProperties(p);
+        return pageList;
+    }
+
+    @Override
+    public void afterAll() {
+        //这个方法即使不分页也会被执行，所以要判断 null
+        AbstractHelperDialect delegate = autoDialect.getDelegate();
+        if (delegate != null) {
+            delegate.afterAll();
+            autoDialect.clearDelegate();
         }
+        clearPage();
+    }
+
+    @Override
+    public void setProperties(Properties properties) {
+        pageParams = new PageParams();
+        autoDialect = new PageAutoDialect();
+        pageParams.setProperties(properties);
+        autoDialect.setProperties(properties);
     }
 }

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 abel533@gmail.com
+ * Copyright (c) 2014-2017 abel533@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -51,14 +51,14 @@ public class TestUnion {
             List<Country> list = countryMapper.selectUnion();
             assertEquals(1, list.get(0).getId());
             assertEquals(10, list.size());
-            assertEquals(13, ((Page) list).getTotal());
+            assertEquals(13, ((Page<?>) list).getTotal());
 
             //获取第1页，10条内容，默认查询总数count
             PageHelper.startPage(2, 10);
             list = countryMapper.selectUnion();
             assertEquals(181, list.get(0).getId());
             assertEquals(3, list.size());
-            assertEquals(13, ((Page) list).getTotal());
+            assertEquals(13, ((Page<?>) list).getTotal());
         } finally {
             sqlSession.close();
         }

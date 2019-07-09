@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 abel533@gmail.com
+ * Copyright (c) 2014-2017 abel533@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,20 +43,20 @@ public class TestProvider {
     @Test
     public void testProvider() {
         SqlSession sqlSession = MybatisHelper.getSqlSession();
-        Map<String,Object> map = new HashMap<String,Object>();
-        map.put("id",100);
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("id", 100);
         CountryMapper countryMapper = sqlSession.getMapper(CountryMapper.class);
         try {
             PageHelper.startPage(1, 10);
             List<Country> list = countryMapper.selectByProvider(map);
             assertEquals(100, list.get(0).getId());
             assertEquals(1, list.size());
-            assertEquals(1, ((Page) list).getTotal());
+            assertEquals(1, ((Page<?>) list).getTotal());
 
-            map.put("countryname","天朝");
+            map.put("countryname", "天朝");
             PageHelper.startPage(1, 10);
             list = countryMapper.selectByProvider(map);
-            assertEquals(0,list.size());
+            assertEquals(0, list.size());
         } finally {
             sqlSession.close();
         }
@@ -73,12 +73,12 @@ public class TestProvider {
             List<Country> list = countryMapper.selectByCountryProvider(country);
             assertEquals(100, list.get(0).getId());
             assertEquals(1, list.size());
-            assertEquals(1, ((Page) list).getTotal());
+            assertEquals(1, ((Page<?>) list).getTotal());
 
             country.setCountryname("天朝");
             PageHelper.startPage(1, 10);
             list = countryMapper.selectByCountryProvider(country);
-            assertEquals(0,list.size());
+            assertEquals(0, list.size());
         } finally {
             sqlSession.close();
         }

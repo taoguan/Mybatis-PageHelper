@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 abel533@gmail.com
+ * Copyright (c) 2014-2017 abel533@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +24,12 @@
 
 package com.github.pagehelper.sql;
 
-import com.github.pagehelper.parser.SqlParser;
-import com.github.pagehelper.SqlUtil;
+import com.github.pagehelper.parser.CountSqlParser;
 import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectBody;
 import org.junit.Test;
 
 /**
@@ -35,72 +38,9 @@ import org.junit.Test;
 public class SqlTest {
 
     @Test
-    public void testSqlTest() throws JSQLParserException {
-        String originalSql = "Select * from sys_user o where abc = ? and exists(select 1 from sys_role r where o.rolieid = r.id) order by id desc , name asc";
-        SqlUtil.testSql("mysql", originalSql);
-        SqlUtil.testSql("hsqldb", originalSql);
-        SqlUtil.testSql("oracle", originalSql);
-        SqlUtil.testSql("postgresql", originalSql);
-        SqlUtil.testSql("sqlserver", originalSql);
-    }
-
-    @Test
-    public void testSqlTest2() throws JSQLParserException {
-        String originalSql = "Select username,usertype,userrole from sys_user o where abc = ? order by id desc , name asc";
-        SqlUtil.testSql("mysql", originalSql);
-        SqlUtil.testSql("hsqldb", originalSql);
-        SqlUtil.testSql("oracle", originalSql);
-        SqlUtil.testSql("postgresql", originalSql);
-        SqlUtil.testSql("sqlserver", originalSql);
-    }
-
-    @Test
-    public void testSqlFunctionTest() throws JSQLParserException {
-        String originalSql = "Select sum(userid) from sys_user o where abc = ? order by id desc , name asc";
-        SqlUtil.testSql("mysql", originalSql);
-        SqlUtil.testSql("hsqldb", originalSql);
-        SqlUtil.testSql("oracle", originalSql);
-        SqlUtil.testSql("postgresql", originalSql);
-        SqlUtil.testSql("sqlserver", originalSql);
-    }
-
-    @Test
-    public void testSqlAs() throws JSQLParserException {
-        String originalSql = "Select id as `id` from sys_user o where abc = ? order by id desc , name asc";
-        SqlUtil.testSql("mysql", originalSql);
-    }
-
-    @Test
-    public void testSelectParameter() throws JSQLParserException {
-        String originalSql = "Select a,b,? as c,? d from sys_user o where abc = ? order by id desc , name asc";
-        SqlUtil.testSql("mysql", originalSql);
-        SqlUtil.testSql("hsqldb", originalSql);
-        SqlUtil.testSql("oracle", originalSql);
-        SqlUtil.testSql("postgresql", originalSql);
-        SqlUtil.testSql("sqlserver", originalSql);
-    }
-
-    @Test
-    public void testSelectParameter2() throws JSQLParserException {
-        String originalSql = "with " +
-                "cr as " +
-                "( " +
-                "    select CountryRegionCode,? name,? as id from person.CountryRegion where Name like 'C%' order by " +
-                "name" +
-                ") " +
-                " " +
-                "select ? name,? as code from person.StateProvince where CountryRegionCode in (select * from cr) order by name";
-        SqlUtil.testSql("mysql", originalSql);
-        SqlUtil.testSql("hsqldb", originalSql);
-        SqlUtil.testSql("oracle", originalSql);
-        SqlUtil.testSql("postgresql", originalSql);
-        SqlUtil.testSql("sqlserver", originalSql);
-    }
-
-    @Test
     public void testSqlParser() throws JSQLParserException {
-        SqlParser sqlParser = new SqlParser();
-        System.out.println(sqlParser.getSmartCountSql("with " +
+        CountSqlParser countSqlParser = new CountSqlParser();
+        System.out.println(countSqlParser.getSmartCountSql("with " +
                 "cr as " +
                 "( " +
                 "    select CountryRegionCode from person.CountryRegion where Name like 'C%' order by name" +
@@ -108,30 +48,63 @@ public class SqlTest {
                 " " +
                 "select * from person.StateProvince where CountryRegionCode in (select * from cr)"));
 
-        System.out.println(sqlParser.getSmartCountSql("with cr as " +
+        System.out.println(countSqlParser.getSmartCountSql("with cr as " +
                 " (select aaz093 from aa10 where aaa100 like 'AAB05%' order by aaz093 desc) " +
                 "select count(1) from aa10 where aaz093 in (select * from cr)"));
 
 
-        System.out.println(sqlParser.getSmartCountSql("select a.aac001,a.aac030,b.aaa103 " +
+        System.out.println(countSqlParser.getSmartCountSql("select a.aac001,a.aac030,b.aaa103 " +
                 "  from ac02 a " +
                 "  left join aa10 b " +
                 "    on b.aaa100 = 'AAC031' " +
                 "   and b.aaa102 = a.aac031 " +
                 "   order by a.aac001"));
 
-        System.out.println(sqlParser.getSmartCountSql("select * from aa10 WHERE aaa100 LIKE 'AAB05%' " +
+        System.out.println(countSqlParser.getSmartCountSql("select * from aa10 WHERE aaa100 LIKE 'AAB05%' " +
                 "union " +
                 "select * from aa10 where aaa100 = 'AAC031'"));
 
-        System.out.println(sqlParser.getSmartCountSql("select * from (select * from aa10 WHERE aaa100 LIKE 'AAB05%' " +
+        System.out.println(countSqlParser.getSmartCountSql("select * from (select * from aa10 WHERE aaa100 LIKE 'AAB05%' " +
                 "union " +
                 "select * from aa10 where aaa100 = 'AAC031')"));
     }
 
     @Test
     public void testSqlParser2() throws JSQLParserException {
-        SqlParser sqlParser = new SqlParser();
-        System.out.println(sqlParser.getSmartCountSql("select countryname,count(id) from country group by countryname"));
+        CountSqlParser countSqlParser = new CountSqlParser();
+        System.out.println(countSqlParser.getSmartCountSql("select countryname,count(id) from country group by countryname"));
+    }
+    @Test
+    public void testSqlParser3() throws JSQLParserException {
+        CountSqlParser countSqlParser = new CountSqlParser();
+        System.out.println(countSqlParser.getSmartCountSql("SELECT *\n" +
+                "    FROM vwdatasearch\n" +
+                "    WHERE ComId = ?\n" +
+                "    AND (\n" +
+                "      Title1 %% ?\n" +
+                "    )\n"));
+    }
+
+    @Test
+    public void testWithNolock(){
+        String sql = "SELECT * FROM A WITH(NOLOCK) INNER JOIN B WITH(NOLOCK) ON A.TypeId = B.Id";
+        System.out.println(sql);
+        sql = sql.replaceAll("((?i)\\s*(\\w?)\\s*with\\s*\\(nolock\\))", " $2_PAGEWITHNOLOCK");
+        System.out.println(sql);
+        //解析SQL
+        Statement stmt = null;
+        try {
+            stmt = CCJSqlParserUtil.parse(sql);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return;
+        }
+        Select select = (Select) stmt;
+        SelectBody selectBody = select.getSelectBody();
+        sql = selectBody.toString();
+
+        sql = sql.replaceAll("\\s*(\\w*?)_PAGEWITHNOLOCK", " $1 WITH(NOLOCK)");
+
+        System.out.println(sql);
     }
 }

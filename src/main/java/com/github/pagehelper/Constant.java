@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 abel533@gmail.com
+ * Copyright (c) 2014-2017 abel533@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,8 +36,4 @@ public interface Constant {
     String PAGEPARAMETER_FIRST = "First" + SUFFIX_PAGE;
     //第二个分页参数
     String PAGEPARAMETER_SECOND = "Second" + SUFFIX_PAGE;
-
-    String PROVIDER_OBJECT = "_provider_object";
-    //存储原始的参数
-    String ORIGINAL_PARAMETER_OBJECT = "_ORIGINAL_PARAMETER_OBJECT";
 }

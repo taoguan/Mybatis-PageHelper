@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 abel533@gmail.com
+ * Copyright (c) 2014-2017 abel533@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,24 +50,24 @@ public class TestDynamicIfTwoList {
         try {
             //获取第1页，10条内容，默认查询总数count
             PageHelper.startPage(1, 10);
-            List<Country> list = countryMapper.selectIf2List(Arrays.asList(1,2),Arrays.asList(3,4));
+            List<Country> list = countryMapper.selectIf2List(Arrays.asList(1, 2), Arrays.asList(3, 4));
             assertEquals(5, list.get(0).getId());
             assertEquals(10, list.size());
-            assertEquals(179, ((Page) list).getTotal());
+            assertEquals(179, ((Page<?>) list).getTotal());
 
             //获取第1页，10条内容，默认查询总数count
             PageHelper.startPage(1, 10);
-            list = countryMapper.selectIf2List(Arrays.asList(1,2),null);
+            list = countryMapper.selectIf2List(Arrays.asList(1, 2), null);
             assertEquals(3, list.get(0).getId());
             assertEquals(10, list.size());
-            assertEquals(181, ((Page) list).getTotal());
+            assertEquals(181, ((Page<?>) list).getTotal());
 
             //获取第1页，10条内容，默认查询总数count
             PageHelper.startPage(1, 10);
-            list = countryMapper.selectIf2List(new ArrayList<Integer>(0),null);
+            list = countryMapper.selectIf2List(new ArrayList<Integer>(0), null);
             assertEquals(1, list.get(0).getId());
             assertEquals(10, list.size());
-            assertEquals(183, ((Page) list).getTotal());
+            assertEquals(183, ((Page<?>) list).getTotal());
         } finally {
             sqlSession.close();
         }

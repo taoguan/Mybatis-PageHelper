@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 abel533@gmail.com
+ * Copyright (c) 2014-2017 abel533@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,7 @@
 
 package com.github.pagehelper.mapper;
 
-import com.github.pagehelper.model.Country;
-import com.github.pagehelper.model.CountryExample;
+import com.github.pagehelper.model.*;
 import com.github.pagehelper.test.basic.dynamic.Where;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -35,6 +34,7 @@ import org.apache.ibatis.session.RowBounds;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("rawtypes")
 public interface CountryMapper {
 
     @Select("select * from country order by ${order}")
@@ -50,6 +50,9 @@ public interface CountryMapper {
     List<Country> selectByOrder2(@Param("order") String order);
 
     List<Country> selectAll();
+
+    //嵌套查询
+    List<Country> selectCollectionMap();
 
     List<Country> selectGreterThanId(int id);
 
@@ -108,4 +111,20 @@ public interface CountryMapper {
     List<Country> selectDistinct();
 
     List<Country> selectExists();
+
+    List<Country> selectByPageNumSize(@Param("pageNum") int pageNum, @Param("pageSize") int pageSize);
+
+    List<Country> selectByPageNumSizeOrderBy(@Param("pageNum") int pageNum, @Param("pageSize") int pageSize, @Param("orderBy") String orderBy);
+
+    List<Country> selectByOrderBy(@Param("orderBy") String orderBy);
+
+    List<Country> selectByQueryModel(CountryQueryModel queryModel);
+
+    List<Country> selectByIdList(@Param("idList") List<Long> idList);
+
+    List<Country> selectByIdList2(@Param("idList") List<Long> idList);
+
+    List<Map<String, Object>> execute(@Param("sql") String sql);
+
+    List<CountryCode> selectByCode(Code code);
 }

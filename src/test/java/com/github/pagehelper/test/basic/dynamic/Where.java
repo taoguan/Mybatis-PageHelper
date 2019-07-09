@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 abel533@gmail.com
+ * Copyright (c) 2014-2017 abel533@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ import java.util.Map;
  * Created by liuzh on 2015/1/11.
  */
 public class Where {
-    private Map<String,Object> map;
+    private Map<String, Object> map;
 
     public Where(Map<String, Object> map) {
         this.map = map;

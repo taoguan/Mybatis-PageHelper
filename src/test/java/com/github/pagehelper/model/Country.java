@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 abel533@gmail.com
+ * Copyright (c) 2014-2017 abel533@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 package com.github.pagehelper.model;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * Description: Country
@@ -37,6 +38,8 @@ public class Country implements Serializable {
     private int id;
     private String countryname;
     private String countrycode;
+
+    List<Country> countries;
 
     public int getId() {
         return id;
@@ -60,5 +63,13 @@ public class Country implements Serializable {
 
     public void setCountrycode(String countrycode) {
         this.countrycode = countrycode;
+    }
+
+    public List<Country> getCountries() {
+        return countries;
+    }
+
+    public void setCountries(List<Country> countries) {
+        this.countries = countries;
     }
 }
