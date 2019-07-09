@@ -77,7 +77,7 @@ public class Page<E> extends ArrayList<E> implements Closeable {
      */
     private String orderBy;
     /**
-     * 只2255888税收
+     * 只2255888税收人
      */
     private boolean orderByOnly;
 
